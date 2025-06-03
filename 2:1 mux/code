@@ -1,1 +1,92 @@
-DESIGN CODE
+DESIGN CODE(MUX)
+module mux2to1(
+    input sel,     
+    input a,      
+    input b,      
+    output reg  y  
+);
+    always @(*) 
+      begin
+        if (sel == 1'b0)
+            y = a;
+        else
+            y = b;
+    end
+endmodule
+
+TEST BENCH (MUX)
+module tb_mux2to1;
+    reg a_tb, b_tb, sel_tb;
+    wire y_tb;
+
+
+    mux2to1 uut (
+      .sel(sel_tb),
+      .a(a_tb),
+      .b(b_tb),
+      .y(y_tb)
+    );
+
+    initial begin
+        $dumpfile("mux2to1.vcd");
+        $dumpvars(0, tb_mux2to1);
+
+        a_tb = 0; b_tb = 1;
+        sel_tb = 0;
+        #10 sel_tb = 1;
+        a_tb = 1; b_tb = 0;
+        sel_tb = 0;
+        #10 sel_tb = 1; 
+        #10 $finish;
+    end
+endmodule
+
+DESIGN(DFF)
+module mux_dff_loop (
+    input  wire clk,
+    input  wire rst,
+    input  wire sel,
+    input  wire b,
+    output reg  q
+);
+    wire mux_out;
+    assign mux_out = sel ? b : q;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst)
+            q <= 1'b0;
+        else
+            q <= mux_out;
+    end
+endmodule
+
+TESTBENCH(DFF)
+module tb_mux_dff_loop;
+    reg clk, rst, sel, b;
+    wire q;
+
+    mux_dff_loop uut (
+        .clk(clk),
+        .rst(rst),
+        .sel(sel),
+        .b(b),
+        .q(q)
+    );
+
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+    initial begin
+        $dumpfile("mux_dff_loop.vcd");
+        $dumpvars(0, tb_mux_dff_loop);
+      $monitor("Time = %0t | rst = %b | sel = %b | b = %b | q = %b", 
+             $time, rst, sel, b, q);
+        rst = 1; sel = 0; b = 0; #12;
+        rst = 0;
+        sel = 1; b = 1; #10;
+        sel = 0;       #20;
+        sel = 1; b = 0; #10;
+        sel = 0;       #20;
+        $finish;
+    end
+endmodule
